@@ -1,175 +1,306 @@
-Introduction to Java 8 Streams
-Java 8 introduced the Stream API as part of its java.util.stream package, bringing functional-style operations to Java. Streams allow you to process sequences of data in a declarative manner, enabling you to focus on what to do with data, rather than how to do it.
 
-What is a Stream?
-A Stream is a sequence of elements that can be processed in parallel or sequentially.
-Unlike collections, streams do not store data. They are simply a mechanism to process data from collections, arrays, or other data sources.
-Streams can be processed lazily and are designed to be composable (you can chain operations).
-Why Use Streams?
-Declarative: Write more concise and readable code.
-Parallel Processing: Streams make it easier to process large datasets in parallel using multi-core processors.
-Chaining Operations: Supports function chaining for cleaner and more expressive code.
-Creating Streams
-Streams can be created from a variety of data sources such as collections, arrays, or individual values.
+# Java 8 Streams and Collectors Tutorial
 
-1. From a Collection
-You can create a stream from a collection using the stream() method:
+Java 8 introduced the **Streams API**, which provides a powerful way to process sequences of data in a functional programming style. One of the key aspects of Streams is the **Collectors** utility, which is used to perform mutable reduction operations.
 
-List<Integer> list = Arrays.asList(1, 2, 3, 4, 5);
-Stream<Integer> stream = list.stream();
-2. From an Array
-You can create a stream from an array using Arrays.stream():
+## Table of Contents
 
-String[] array = {"a", "b", "c"};
-Stream<String> stream = Arrays.stream(array);
-3. From Individual Values
-You can create a stream directly from individual values using Stream.of():
+1. [Introduction to Streams](#introduction-to-streams)
+2. [Stream Operations](#stream-operations)
+    - [Intermediate Operations](#intermediate-operations)
+    - [Terminal Operations](#terminal-operations)
+3. [Introduction to Collectors](#introduction-to-collectors)
+4. [Common Collectors](#common-collectors)
+    - [toList()](#tolist)
+    - [toSet()](#toset)
+    - [toMap()](#tomap)
+    - [joining()](#joining)
+    - [groupingBy()](#groupingby)
+    - [partitioningBy()](#partitioningby)
+    - [counting()](#counting)
+    - [summarizingInt(), summarizingDouble(), summarizingLong()](#summarizing-collectors)
+5. [Custom Collectors](#custom-collectors)
+6. [Conclusion](#conclusion)
 
-Stream<String> stream = Stream.of("apple", "banana", "cherry");
-4. Using Stream.builder()
-You can also use Stream.builder() to create a stream in a more flexible way:
+---
 
-Stream<Integer> stream = Stream.<Integer>builder()
-    .add(10)
-    .add(20)
-    .build();
-Stream Operations
-Stream operations are classified into intermediate and terminal operations.
+## Introduction to Streams
 
-Intermediate Operations
-Intermediate operations are lazy and do not trigger any computation until a terminal operation is invoked. These operations return a new stream.
+A **Stream** in Java is a sequence of elements from a source that supports aggregate operations. It allows you to process collections of data declaratively.
 
-1. filter()
-The filter() method allows you to filter out elements based on a condition:
+### Example
+```java
+import java.util.*;
+import java.util.stream.*;
 
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-List<Integer> evenNumbers = numbers.stream()
-                                   .filter(n -> n % 2 == 0)
-                                   .collect(Collectors.toList());
-System.out.println(evenNumbers);  // Output: [2, 4]
-2. map()
-The map() method transforms each element of the stream using a given function:
+public class StreamExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
 
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-List<Integer> squaredNumbers = numbers.stream()
-                                       .map(n -> n * n)
-                                       .collect(Collectors.toList());
-System.out.println(squaredNumbers);  // Output: [1, 4, 9, 16, 25]
-3. distinct()
-The distinct() method removes duplicates from the stream:
-
-List<Integer> numbers = Arrays.asList(1, 1, 2, 3, 3, 4);
-List<Integer> distinctNumbers = numbers.stream()
-                                       .distinct()
-                                       .collect(Collectors.toList());
-System.out.println(distinctNumbers);  // Output: [1, 2, 3, 4]
-4. sorted()
-The sorted() method sorts the stream in natural order:
-
-List<Integer> numbers = Arrays.asList(5, 3, 8, 1, 2);
-List<Integer> sortedNumbers = numbers.stream()
-                                     .sorted()
-                                     .collect(Collectors.toList());
-System.out.println(sortedNumbers);  // Output: [1, 2, 3, 5, 8]
-Terminal Operations
-Terminal operations trigger the processing of the stream and produce a result or a side-effect.
-
-1. collect()
-The collect() method is used to accumulate the elements of the stream into a collection:
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-List<Integer> result = numbers.stream()
-                              .filter(n -> n % 2 == 0)
-                              .collect(Collectors.toList());
-System.out.println(result);  // Output: [2, 4]
-2. forEach()
-The forEach() method performs an action for each element:
-
-List<String> fruits = Arrays.asList("apple", "banana", "cherry");
-fruits.stream()
-      .forEach(fruit -> System.out.println(fruit));
-3. reduce()
-The reduce() method combines elements of the stream into a single result, such as summing the elements:
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-int sum = numbers.stream()
-                 .reduce(0, Integer::sum);
-System.out.println(sum);  // Output: 15
-4. count()
-The count() method returns the number of elements in the stream:
-
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-long count = numbers.stream().count();
-System.out.println(count);  // Output: 5
-Real-World Examples
-Example 1: Processing a List of Employees
-Imagine you have a list of employees, and you want to:
-
-Filter employees based on salary.
-Get the names of employees who are older than 30.
-Sort them alphabetically.
-class Employee {
-    String name;
-    int age;
-    double salary;
-
-    Employee(String name, int age, double salary) {
-        this.name = name;
-        this.age = age;
-        this.salary = salary;
+        // Convert names to uppercase and print
+        names.stream()
+             .map(String::toUpperCase)
+             .forEach(System.out::println);
     }
 }
+```
 
-List<Employee> employees = Arrays.asList(
-    new Employee("John", 25, 50000),
-    new Employee("Jane", 32, 70000),
-    new Employee("Mark", 45, 80000),
-    new Employee("Alice", 35, 60000)
-);
+---
 
-List<String> result = employees.stream()
-    .filter(e -> e.salary > 60000)  // Filter employees with salary > 60k
-    .filter(e -> e.age > 30)        // Filter employees older than 30
-    .map(e -> e.name)               // Get names of employees
-    .sorted()                       // Sort names alphabetically
-    .collect(Collectors.toList());
+## Stream Operations
 
-System.out.println(result);  // Output: [Alice, Jane, Mark]
-Parallel Streams
-Java 8 Streams provide a powerful way to process large datasets in parallel, making it easier to take advantage of multi-core processors.
+Streams support two types of operations: **Intermediate** and **Terminal**.
 
-How to Use Parallel Streams
-You can convert a sequential stream to a parallel stream by calling parallelStream():
+### Intermediate Operations
+These operations transform a stream into another stream. They are **lazy**, meaning they are not executed until a terminal operation is invoked.
 
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-List<Integer> result = numbers.parallelStream()
-                               .map(n -> n * n)
-                               .collect(Collectors.toList());
-System.out.println(result);
-When to Use Parallel Streams
-Parallel streams are useful for CPU-bound tasks (e.g., large datasets or computationally heavy operations).
-For small datasets, parallel streams may not be beneficial due to the overhead of managing multiple threads.
-Performance Considerations
-1. Avoid Stateful Operations in Parallel Streams
-Stateful operations (like sorted() or distinct()) should be used cautiously with parallel streams because they can affect the correctness of the result.
+Examples:
+- `filter(Predicate)`
+- `map(Function)`
+- `sorted()`
+- `distinct()`
 
-2. Use Efficient Operations
-Chain operations efficiently to minimize unnecessary intermediate steps.
+### Terminal Operations
+These operations produce a result or a side-effect and consume the stream.
 
-Example of inefficient code:
+Examples:
+- `forEach()`
+- `collect()`
+- `reduce()`
+- `count()`
 
-List<Integer> result = numbers.stream()
-    .sorted()
-    .filter(n -> n > 5)
-    .collect(Collectors.toList());
-Optimized version:
+---
 
-List<Integer> result = numbers.stream()
-    .filter(n -> n > 5)
-    .sorted()
-    .collect(Collectors.toList());
-Conclusion
-Java 8 Streams enable a functional programming style in Java, making data processing more declarative and concise.
-Streams support both sequential and parallel processing, allowing you to process data more efficiently.
-Intermediate operations (like filter(), map(), and sorted()) are lazy, while terminal operations (like collect(), reduce(), and forEach()) trigger the stream processing.
-Use parallel streams for large datasets but ensure they are used where parallelism provides a benefit.
+## Introduction to Collectors
+
+**Collectors** is a utility class in `java.util.stream` that provides various reduction operations, such as converting a stream into a collection, summarizing elements, grouping, and partitioning.
+
+---
+
+## Common Collectors
+
+### 1. `toList()`
+
+Collects elements into a `List`.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class ToListExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+
+        // Collect to list
+        List<String> uppercaseNames = names.stream()
+                                           .map(String::toUpperCase)
+                                           .collect(Collectors.toList());
+
+        System.out.println(uppercaseNames);
+    }
+}
+```
+
+---
+
+### 2. `toSet()`
+
+Collects elements into a `Set`.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class ToSetExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Alice");
+
+        // Collect to set (removes duplicates)
+        Set<String> uniqueNames = names.stream()
+                                       .collect(Collectors.toSet());
+
+        System.out.println(uniqueNames);
+    }
+}
+```
+
+---
+
+### 3. `toMap()`
+
+Collects elements into a `Map`. You must provide key and value mapping functions.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class ToMapExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+
+        // Collect to map
+        Map<String, Integer> nameLengthMap = names.stream()
+                                                 .collect(Collectors.toMap(name -> name, name -> name.length()));
+
+        System.out.println(nameLengthMap);
+    }
+}
+```
+
+---
+
+### 4. `joining()`
+
+Concatenates elements into a single `String`.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class JoiningExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+
+        // Join names with commas
+        String result = names.stream()
+                             .collect(Collectors.joining(", "));
+
+        System.out.println(result);
+    }
+}
+```
+
+---
+
+### 5. `groupingBy()`
+
+Groups elements by a classifier function.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class GroupingByExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie", "Anna");
+
+        // Group by first letter
+        Map<Character, List<String>> groupedByFirstLetter = names.stream()
+                                                                .collect(Collectors.groupingBy(name -> name.charAt(0)));
+
+        System.out.println(groupedByFirstLetter);
+    }
+}
+```
+
+---
+
+### 6. `partitioningBy()`
+
+Partitions elements into two groups based on a predicate.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class PartitioningByExample {
+    public static void main(String[] args) {
+        List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
+
+        // Partition into even and odd
+        Map<Boolean, List<Integer>> partitioned = numbers.stream()
+                                                         .collect(Collectors.partitioningBy(n -> n % 2 == 0));
+
+        System.out.println(partitioned);
+    }
+}
+```
+
+---
+
+### 7. `counting()`
+
+Counts the number of elements.
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class CountingExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+
+        // Count names
+        long count = names.stream()
+                          .collect(Collectors.counting());
+
+        System.out.println("Count: " + count);
+    }
+}
+```
+
+---
+
+### 8. `summarizingInt()`, `summarizingDouble()`, `summarizingLong()`
+
+Provides summary statistics (e.g., count, sum, average).
+
+#### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class SummarizingExample {
+    public static void main(String[] args) {
+        List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+
+        // Summarize numbers
+        IntSummaryStatistics stats = numbers.stream()
+                                            .collect(Collectors.summarizingInt(Integer::intValue));
+
+        System.out.println(stats);
+    }
+}
+```
+
+---
+
+## Custom Collectors
+
+You can create custom collectors using the `Collector` interface.
+
+### Example
+```java
+import java.util.*;
+import java.util.stream.*;
+
+public class CustomCollectorExample {
+    public static void main(String[] args) {
+        List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+
+        // Custom collector to concatenate names
+        String result = names.stream()
+                             .collect(Collector.of(
+                                 StringBuilder::new,
+                                 (sb, s) -> sb.append(s).append(" "),
+                                 StringBuilder::append,
+                                 StringBuilder::toString
+                             ));
+
+        System.out.println(result.trim());
+    }
+}
+```
+
+---
+
+## Conclusion
+
+The Streams API and Collectors utility provide powerful abstractions for processing collections. By understanding and leveraging these features, you can write concise, efficient, and readable Java code.
